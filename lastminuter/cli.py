@@ -40,7 +40,7 @@ def get_trips(
             'filters_not': '',
             'filters_and': filters_str,
             'sorting': 'price',
-            'page': 0,
+            'page': page,
             'filters_ext': 0,
             'context': {},
         }
