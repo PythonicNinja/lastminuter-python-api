@@ -58,13 +58,13 @@ def main():
     trips = get_trips(
         source_city="Gdańsk",
         destination_country=""
-                            # "Grecja,"
+                            "Grecja,"
                             "Egipt,"
-                            # "Hiszpania,"
-                            # "Turcja,"
-                            # "Albania,"
-                            # "Bułgaria,"
-                            # "Cypr,"
+                            "Hiszpania,"
+                            "Turcja,"
+                            "Albania,"
+                            "Bułgaria,"
+                            "Cypr,"
                             "",
         start="2023-08-01",
         till="2023-08-31",
