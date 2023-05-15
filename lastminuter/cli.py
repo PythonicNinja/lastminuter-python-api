@@ -111,7 +111,7 @@ def main():
     )
     parser.add_argument(
         "--months",
-        default="2023-05,",
+        default="",
         type=str,
         help="which months to select like: 2023-05,2023-06,2023-07"
     )
