@@ -1,28 +1,27 @@
+import asyncio
 import argparse
 from typing import List
 
 import arrow
-import requests
+import httpx
 from simple_term_menu import TerminalMenu
 
 base_url = "https://lastminuter.pl"
 
 
-def get_trips(
-        source_city="Gdańsk",
-        destination_country="Grecja,Hiszpania",
-        start="2023-08-01",
-        till="2023-08-31",
-        stars="5",
-        duration="6-8",
-        pages=3,
-        exclude_destination_country=None,
-        board=None,
-        **kwargs,
+async def get_trips(
+    session: httpx.AsyncClient,
+    source_city="Gdańsk",
+    destination_country="Grecja,Hiszpania",
+    start="2023-08-01",
+    till="2023-08-31",
+    stars="5",
+    duration="6-8",
+    pages=3,
+    exclude_destination_country=None,
+    board=None,
+    **kwargs,
 ) -> List[dict]:
-    """
-    "10:Gdańsk|13:2023-08-01|14:2023-08-31|8:5|6:6-8|3:Grecja,Hiszpania"
-    """
     headers = {
         'Content-Type': 'application/json',
     }
@@ -56,7 +55,7 @@ def get_trips(
             'filters_ext': 0,
             'context': {},
         }
-        req = requests.post(
+        req = await session.post(
             url=f"{base_url}/offers/",
             headers=headers,
             json=filter,
@@ -66,31 +65,35 @@ def get_trips(
     return trips
 
 
-def display_trips_table(period: dict):
+async def display_trips_table(period: dict):
     line = '\n'
     spacer = line + '-' * 20 + line
     print(f"{spacer} {period['start']} - {period['till']} {spacer}")
 
-    trips = get_trips(**period)
-    for trip in trips:
-        trip_date = arrow.get(trip['date'].split(' ')[0])
-        display_start = trip_date.format('DD.MM (ddd)')
-        display_end = trip_date.shift(days=trip['days']).format('DD.MM (ddd)')
-        display_date = f"{display_start} - {display_end}"
-        display_board = trip['board'] if trip['board'] != 'Własne' else '    '
-        if period['max_price'] and trip['pln'] > period['max_price']:
-            break
-        row = [
-            trip['pln'],
-            trip['country'],
-            trip['city'],
-            display_date,
-            trip['days'],
-            display_board,
-            trip['stars'],
-            base_url + trip['link'],
-        ]
-        print('{:>4} | {:<10} | {:^17} | {:<3} | {:<1} | {:<13} | {:<3} | {:<10}'.format(*row))
+    async def run():
+        async with httpx.AsyncClient() as client:
+            trips = await get_trips(client, **period)
+            for trip in trips:
+                trip_date = arrow.get(trip['date'].split(' ')[0])
+                display_start = trip_date.format('DD.MM (ddd)')
+                display_end = trip_date.shift(days=trip['days']).format('DD.MM (ddd)')
+                display_date = f"{display_start} - {display_end}"
+                display_board = trip['board'] if trip['board'] != 'Własne' else '    '
+                if period['max_price'] and trip['pln'] > period['max_price']:
+                    break
+                row = [
+                    trip['pln'],
+                    trip['country'],
+                    trip['city'],
+                    display_date,
+                    trip['days'],
+                    display_board,
+                    trip['stars'],
+                    base_url + trip['link'],
+                ]
+                print('{:>4} | {:<10} | {:^17} | {:<3} | {:<1} | {:<13} | {:<3} | {:<10}'.format(*row))
+
+    await run()
 
 
 def main():
@@ -186,8 +189,11 @@ def main():
         )
         periods.append(period)
 
-    for period in periods:
-        display_trips_table(period)
+    async def display_trips():
+        for period in periods:
+            await display_trips_table(period)
+
+    asyncio.run(display_trips())
 
 
 if __name__ == '__main__':

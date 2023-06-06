@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 requirements = """
 arrow
 click
-requests
+httpx
 simple_term_menu
 """
 
